@@ -2,6 +2,28 @@
 
 A lightweight kanban board for tracking AI agent tasks and usage. Built for dogfooding AI-assisted development workflows.
 
+## Screenshots
+
+### Kanban Board
+Drag-and-drop task management with columns for Backlog, Ready, In Progress, and Review.
+
+![Kanban Board](docs/screenshots/kanban-board.png)
+
+### Usage Dashboard
+Monitor costs, tokens, and activity across all agents.
+
+![Dashboard](docs/screenshots/dashboard.png)
+
+### Archive
+Browse and restore completed tasks with filtering options.
+
+![Archive](docs/screenshots/archive.png)
+
+### Settings
+Configure models and agent-specific pricing.
+
+![Settings](docs/screenshots/settings.png)
+
 ## Features
 
 - **Kanban Board** — Drag-and-drop task management across Backlog → In Progress → Review → Done
