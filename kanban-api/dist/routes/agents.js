@@ -1,0 +1,14 @@
+import { Router } from 'express';
+import { getAgentUsageSummary } from '../services/agent-usage.js';
+export const agentRoutes = Router();
+// GET /agents/:id/usage - Get agent's usage summary (self-check)
+agentRoutes.get('/:id/usage', async (req, res) => {
+    try {
+        const summary = await getAgentUsageSummary(req.params.id);
+        res.json(summary);
+    }
+    catch (error) {
+        console.error('Error fetching agent usage:', error);
+        res.status(500).json({ error: 'Failed to fetch usage summary' });
+    }
+});

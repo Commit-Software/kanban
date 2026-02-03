@@ -1,0 +1,87 @@
+import { useEffect, useRef, useState } from 'react';
+import { io, Socket } from 'socket.io-client';
+import type { Task } from './types';
+
+// Detect WebSocket URL based on current location
+// In production/Tailscale, connect to same host on port 3000
+// In dev with proxy, connect to localhost:3000
+const getSocketUrl = () => {
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  
+  const { protocol, hostname } = window.location;
+  // If accessing via Tailscale or non-localhost, connect to API on port 3000
+  if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
+    const wsProtocol = protocol === 'https:' ? 'wss:' : 'ws:';
+    return `${wsProtocol}//${hostname}:3000`;
+  }
+  
+  return 'http://localhost:3000';
+};
+
+const API_URL = getSocketUrl();
+
+interface TaskEvents {
+  'task:created': (data: { task: Task }) => void;
+  'task:updated': (data: { task: Task }) => void;
+  'task:deleted': (data: { taskId: string }) => void;
+  'task:claimed': (data: { task: Task; agentId: string }) => void;
+  'task:completed': (data: { task: Task; agentId: string }) => void;
+  'task:blocked': (data: { task: Task; agentId: string; reason: string }) => void;
+}
+
+export function useSocket(handlers: Partial<TaskEvents>) {
+  const socketRef = useRef<Socket | null>(null);
+  const handlersRef = useRef(handlers);
+  const [connected, setConnected] = useState(false);
+  
+  // Keep handlers ref up to date
+  useEffect(() => {
+    handlersRef.current = handlers;
+  }, [handlers]);
+
+  useEffect(() => {
+    // Connect to socket
+    const socket = io(API_URL, {
+      transports: ['websocket', 'polling'],
+    });
+    
+    socketRef.current = socket;
+
+    socket.on('connect', () => {
+      console.log('🔌 WebSocket connected');
+      setConnected(true);
+    });
+
+    socket.on('disconnect', () => {
+      console.log('🔌 WebSocket disconnected');
+      setConnected(false);
+    });
+
+    // Register event handlers
+    const events: (keyof TaskEvents)[] = [
+      'task:created',
+      'task:updated', 
+      'task:deleted',
+      'task:claimed',
+      'task:completed',
+      'task:blocked',
+    ];
+
+    events.forEach((event) => {
+      socket.on(event, (data: unknown) => {
+        const handler = handlersRef.current[event];
+        if (handler) {
+          (handler as (data: unknown) => void)(data);
+        }
+      });
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
+
+  return { connected };
+}
