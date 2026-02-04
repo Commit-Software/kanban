@@ -277,7 +277,7 @@ function App() {
         onDragEnd={handleDragEnd}
       >
         <div className="flex-1 overflow-x-auto overflow-y-hidden px-4 md:px-6 min-h-0">
-          <div className="flex gap-3 md:gap-4 h-full pb-4">
+          <div className="flex gap-3 md:gap-4 h-full pb-4 max-w-[1800px] mx-auto justify-center">
             {COLUMNS.map((column) => (
               <KanbanColumn
                 key={column.id}
