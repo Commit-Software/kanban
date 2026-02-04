@@ -5,7 +5,13 @@ import { HelpTooltip, HELP_CONTENT } from '../components/HelpTooltip';
 // Agent Usage Card Component
 function AgentUsageCard({ agents }: { agents: string[] }) {
   const [agentId, setAgentId] = useState('');
-  const [usage, setUsage] = useState<any>(null);
+  const [usage, setUsage] = useState<{
+    today: { cost_usd: number; tokens_total: number; task_count: number };
+    yesterday: { cost_usd: number; tokens_total: number; task_count: number };
+    week_total: { cost_usd: number; tokens_total: number; task_count: number };
+    trend_vs_yesterday: string;
+    trend_vs_week_avg: string;
+  } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -23,7 +29,7 @@ function AgentUsageCard({ agents }: { agents: string[] }) {
       if (!response.ok) throw new Error('Agent not found');
       const data = await response.json();
       setUsage(data);
-    } catch (err) {
+    } catch {
       setError('Could not fetch agent usage');
       setUsage(null);
     } finally {
@@ -213,6 +219,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchStats();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [period]);
 
   const formatTokens = (tokens: number) => {

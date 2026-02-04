@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import type { Task, Column } from '../types';
 import { TaskCard } from './TaskCard';
 import { useDroppable } from '@dnd-kit/core';

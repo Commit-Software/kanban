@@ -75,7 +75,7 @@ export default function Settings() {
       setAgents(prev => prev.map(a => 
         a.agent_id === agentId ? { ...a, model } : a
       ));
-    } catch (err) {
+    } catch {
       setError('Failed to update agent settings');
     } finally {
       setSaving(null);
@@ -101,7 +101,7 @@ export default function Settings() {
       setAgents(prev => [...prev, newAgent]);
       setNewAgentId('');
       setNewAgentModel('claude-sonnet-4');
-    } catch (err) {
+    } catch {
       setError('Failed to add agent');
     } finally {
       setSaving(null);
@@ -121,7 +121,7 @@ export default function Settings() {
       if (!response.ok) throw new Error('Failed to delete');
       
       setAgents(prev => prev.filter(a => a.agent_id !== agentId));
-    } catch (err) {
+    } catch {
       setError('Failed to delete agent settings');
     } finally {
       setSaving(null);

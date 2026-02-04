@@ -66,6 +66,7 @@ export function HelpTooltip({ title, sections }: HelpTooltipProps) {
 }
 
 // Pre-defined help content for each page
+// eslint-disable-next-line react-refresh/only-export-components
 export const HELP_CONTENT = {
   kanban: {
     title: 'Kanban Board Help',

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { Task, TaskStatus } from '../types';
 import { COLUMNS } from '../types';
 
@@ -26,18 +26,23 @@ export function EditTaskModal({ task, isOpen, onClose, onSave, onDelete }: EditT
   const [dueDate, setDueDate] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+  // Sync form state from task prop
+  const syncFromTask = useCallback((t: Task) => {
+    setTitle(t.title);
+    setDescription(t.description || '');
+    setStatus(t.status);
+    setPriority(t.priority);
+    setSkills(t.skills_required.join(', '));
+    setDueDate(t.due_date || '');
+    setShowDeleteConfirm(false);
+  }, []);
+
   // Update form when task changes
   useEffect(() => {
     if (task) {
-      setTitle(task.title);
-      setDescription(task.description || '');
-      setStatus(task.status);
-      setPriority(task.priority);
-      setSkills(task.skills_required.join(', '));
-      setDueDate(task.due_date || '');
-      setShowDeleteConfirm(false);
+      syncFromTask(task);
     }
-  }, [task]);
+  }, [task, syncFromTask]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
