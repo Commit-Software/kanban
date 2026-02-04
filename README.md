@@ -2,6 +2,12 @@
 
 A lightweight kanban board for tracking AI agent tasks and usage. Built for dogfooding AI-assisted development workflows.
 
+## Demo
+
+https://github.com/user-attachments/assets/kanban-promo.mp4
+
+https://github.com/Commit-Software/kanban/raw/main/docs/media/kanban-promo.mp4
+
 ## Screenshots
 
 ### Kanban Board
@@ -118,4 +124,3 @@ MIT
 ---
 
 Built with 🤖 by Nick & Ken during a late-night coding session.
-# CI Test
