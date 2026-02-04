@@ -4,9 +4,9 @@ A lightweight kanban board for tracking AI agent tasks and usage. Built for dogf
 
 ## Demo
 
-https://github.com/user-attachments/assets/kanban-promo.mp4
+<video src="https://github.com/Commit-Software/kanban/raw/main/docs/media/kanban-promo.mp4" controls width="100%"></video>
 
-https://github.com/Commit-Software/kanban/raw/main/docs/media/kanban-promo.mp4
+[▶️ Watch the promo video](https://github.com/Commit-Software/kanban/raw/main/docs/media/kanban-promo.mp4)
 
 ## Screenshots
 
