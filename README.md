@@ -190,6 +190,7 @@ Integrate BMAD with OpenCode support to drive analyst, dev, and code review work
 ### Install BMAD (alpha)
 
 ```text
+# install opencode + oh-my-opencode 1st
 npx bmad-method@alpha install
 # When prompted, select "opencode" support
 ```
@@ -206,6 +207,7 @@ npx bmad-method@alpha install
 /bmad-bmm-dev-story
 ```
 
+```text
 # Code review workflow
 /bmad-bmm-code-review
 ```
