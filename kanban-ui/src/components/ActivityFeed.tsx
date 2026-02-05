@@ -76,7 +76,14 @@ export function ActivityFeed({ isOpen, onClose }: ActivityFeedProps) {
       />
       
       {/* Panel */}
-      <div className="fixed right-0 top-0 bottom-0 w-full md:w-80 bg-gray-900 border-l border-gray-800 z-50 flex flex-col shadow-2xl">
+      <div 
+        className="fixed right-0 top-0 bottom-0 w-full md:w-80 bg-gray-900 border-l border-gray-800 z-50 flex flex-col shadow-2xl"
+        style={{
+          paddingTop: 'env(safe-area-inset-top)',
+          paddingRight: 'env(safe-area-inset-right)',
+          paddingBottom: 'env(safe-area-inset-bottom)',
+        }}
+      >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-800">
           <h2 className="text-white font-semibold flex items-center gap-2">
@@ -85,14 +92,15 @@ export function ActivityFeed({ isOpen, onClose }: ActivityFeedProps) {
           <div className="flex items-center gap-2">
             <button
               onClick={fetchActivities}
-              className="text-gray-400 hover:text-white p-1 transition-colors"
+              className="text-gray-400 hover:text-white p-2 transition-colors"
               title="Refresh"
             >
               🔄
             </button>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-white p-1 transition-colors"
+              className="text-gray-400 hover:text-white p-2 text-xl transition-colors"
+              aria-label="Close"
             >
               ✕
             </button>
