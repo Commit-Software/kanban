@@ -26,7 +26,7 @@ userRoutes.get('/', async (_req: Request, res: Response) => {
   res.json({ users, count: users.length });
 });
 
-userRoutes.get('/:id', async (req: Request, res: Response) => {
+userRoutes.get('/:id', async (req: Request<{ id: string }>, res: Response) => {
   const user = await getUserById(req.params.id);
   if (!user) {
     return res.status(404).json({ error: 'User not found' });
@@ -48,7 +48,7 @@ userRoutes.post('/', async (req: Request, res: Response) => {
   res.status(201).json({ user: result.user });
 });
 
-userRoutes.patch('/:id', async (req: Request, res: Response) => {
+userRoutes.patch('/:id', async (req: Request<{ id: string }>, res: Response) => {
   const { data: input, error } = handleValidation(UpdateUserSchema, req.body);
   if (error) {
     return res.status(400).json({ error });
@@ -66,7 +66,7 @@ userRoutes.patch('/:id', async (req: Request, res: Response) => {
   res.json({ user: result.user });
 });
 
-userRoutes.delete('/:id', async (req: Request, res: Response) => {
+userRoutes.delete('/:id', async (req: Request<{ id: string }>, res: Response) => {
   if (req.params.id === req.user!.id) {
     return res.status(400).json({ error: 'Cannot delete your own account' });
   }

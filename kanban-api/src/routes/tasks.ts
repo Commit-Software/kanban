@@ -56,7 +56,7 @@ taskRoutes.get('/', async (req: Request, res: Response) => {
 });
 
 // GET /tasks/:id - Get single task
-taskRoutes.get('/:id', async (req: Request, res: Response) => {
+taskRoutes.get('/:id', async (req: Request<{ id: string }>, res: Response) => {
   const task = await getTaskById(req.params.id);
   if (!task) {
     return res.status(404).json({ error: 'Task not found' });
@@ -83,7 +83,7 @@ taskRoutes.post('/', async (req: Request, res: Response) => {
 });
 
 // PATCH /tasks/:id - Update a task
-taskRoutes.patch('/:id', async (req: Request, res: Response) => {
+taskRoutes.patch('/:id', async (req: Request<{ id: string }>, res: Response) => {
   const existingTask = await getTaskById(req.params.id);
   if (!existingTask) {
     return res.status(404).json({ error: 'Task not found' });
@@ -107,7 +107,7 @@ taskRoutes.patch('/:id', async (req: Request, res: Response) => {
 });
 
 // DELETE /tasks/:id - Delete a task
-taskRoutes.delete('/:id', async (req: Request, res: Response) => {
+taskRoutes.delete('/:id', async (req: Request<{ id: string }>, res: Response) => {
   const existingTask = await getTaskById(req.params.id);
   if (!existingTask) {
     return res.status(404).json({ error: 'Task not found' });
@@ -127,7 +127,7 @@ taskRoutes.delete('/:id', async (req: Request, res: Response) => {
 });
 
 // POST /tasks/:id/claim - Claim a task
-taskRoutes.post('/:id/claim', async (req: Request, res: Response) => {
+taskRoutes.post('/:id/claim', async (req: Request<{ id: string }>, res: Response) => {
   const { data: input, error } = handleValidation(ClaimTaskSchema, req.body);
   if (error) {
     return res.status(400).json({ error });
@@ -142,7 +142,7 @@ taskRoutes.post('/:id/claim', async (req: Request, res: Response) => {
 });
 
 // POST /tasks/:id/complete - Complete a task
-taskRoutes.post('/:id/complete', async (req: Request, res: Response) => {
+taskRoutes.post('/:id/complete', async (req: Request<{ id: string }>, res: Response) => {
   const agentId = req.headers['x-agent-id'] as string;
   if (!agentId) {
     return res.status(401).json({ error: 'x-agent-id header required' });
@@ -162,7 +162,7 @@ taskRoutes.post('/:id/complete', async (req: Request, res: Response) => {
 });
 
 // POST /tasks/:id/block - Block a task
-taskRoutes.post('/:id/block', async (req: Request, res: Response) => {
+taskRoutes.post('/:id/block', async (req: Request<{ id: string }>, res: Response) => {
   const agentId = req.headers['x-agent-id'] as string;
   if (!agentId) {
     return res.status(401).json({ error: 'x-agent-id header required' });
@@ -182,7 +182,7 @@ taskRoutes.post('/:id/block', async (req: Request, res: Response) => {
 });
 
 // POST /tasks/:id/handoff - Complete and create next task
-taskRoutes.post('/:id/handoff', async (req: Request, res: Response) => {
+taskRoutes.post('/:id/handoff', async (req: Request<{ id: string }>, res: Response) => {
   const agentId = req.headers['x-agent-id'] as string;
   if (!agentId) {
     return res.status(401).json({ error: 'x-agent-id header required' });

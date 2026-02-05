@@ -37,9 +37,10 @@ export function useSocket(handlers: Partial<TaskEvents>) {
     handlersRef.current = handlers;
   }, [handlers]);
 
-  const connect = useCallback(() => {
-    if (socketRef.current?.connected) {
-      return;
+  const createSocket = useCallback(() => {
+    if (socketRef.current) {
+      socketRef.current.disconnect();
+      socketRef.current = null;
     }
 
     const token = getAccessToken();
@@ -83,25 +84,24 @@ export function useSocket(handlers: Partial<TaskEvents>) {
         }
       });
     });
+
+    return socket;
   }, []);
 
   const reconnect = useCallback(() => {
-    if (socketRef.current) {
-      socketRef.current.disconnect();
-      socketRef.current = null;
-    }
-    connect();
-  }, [connect]);
+    createSocket();
+  }, [createSocket]);
 
   useEffect(() => {
-    connect();
+    createSocket();
 
     return () => {
       if (socketRef.current) {
         socketRef.current.disconnect();
+        socketRef.current = null;
       }
     };
-  }, [connect]);
+  }, [createSocket]);
 
   return { connected, reconnect };
 }
