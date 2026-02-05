@@ -72,8 +72,9 @@ export default function Layout() {
       {/* Drawer */}
       <div 
         className={`fixed top-0 left-0 h-full w-72 bg-gray-900 z-50 transform transition-transform duration-300 ease-out ${
-          drawerOpen ? 'translate-x-0' : '-translate-x-full'
+          drawerOpen ? 'translate-x-0' : '-translate-x-full pointer-events-none'
         }`}
+        aria-hidden={!drawerOpen}
         style={{
           paddingTop: 'env(safe-area-inset-top)',
           paddingBottom: 'env(safe-area-inset-bottom)',
@@ -103,6 +104,7 @@ export default function Layout() {
                   to={item.to}
                   end={item.to === '/'}
                   onClick={() => setDrawerOpen(false)}
+                  tabIndex={drawerOpen ? 0 : -1}
                   className={({ isActive }) =>
                     `flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium transition-all ${
                       isActive
