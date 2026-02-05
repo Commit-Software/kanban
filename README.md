@@ -183,6 +183,33 @@ export KANBAN_TOKEN="<token-from-login>"
 - **Database**: SQLite
 - **Real-time**: WebSocket
 
+## BMAD Setup
+
+Integrate BMAD with OpenCode support to drive analyst, dev, and code review workflows.
+
+### Install BMAD (alpha)
+
+```text
+npx bmad-method@alpha install
+# When prompted, select "opencode" support
+```
+
+### Run workflows
+
+```text
+# Quick spec workflow
+/bmd-bmm-quick-spec
+```
+
+```text
+# Developer story workflow
+/bmad-bmm-dev-story
+```
+
+# Code review workflow
+/bmad-bmm-code-review
+```
+
 ## License
 
 MIT
