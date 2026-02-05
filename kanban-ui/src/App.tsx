@@ -13,6 +13,7 @@ import { EditTaskModal } from './components/EditTaskModal';
 import { FilterBar } from './components/FilterBar';
 import { ActivityFeed } from './components/ActivityFeed';
 import { HelpTooltip, HELP_CONTENT } from './components/HelpTooltip';
+import { PullToRefresh } from './components/PullToRefresh';
 
 function App() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -213,6 +214,7 @@ function App() {
   }
 
   return (
+    <PullToRefresh onRefresh={fetchTasks} className="h-full">
     <div className="h-full bg-gray-950 flex flex-col overflow-hidden">
       {/* Header - responsive */}
       <div className="flex-shrink-0 p-4 md:p-6 pb-2 md:pb-4">
@@ -313,6 +315,7 @@ function App() {
         onClose={() => setIsActivityOpen(false)}
       />
     </div>
+    </PullToRefresh>
   );
 }
 
