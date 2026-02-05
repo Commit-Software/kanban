@@ -5,16 +5,36 @@
 set -e
 
 KANBAN_API_URL="${KANBAN_API_URL:-http://localhost:3000}"
+KANBAN_TOKEN="${KANBAN_TOKEN:-}"
 SNAPSHOT_DIR="${KANBAN_SNAPSHOT_DIR:-/tmp/kanban-snapshots}"
 
 mkdir -p "$SNAPSHOT_DIR"
 
-# Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
 BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+NC='\033[0m'
+
+AUTH_HEADER=()
+
+set_auth_header() {
+  if [[ -n "$KANBAN_TOKEN" ]]; then
+    AUTH_HEADER=(-H "Authorization: Bearer $KANBAN_TOKEN")
+  else
+    AUTH_HEADER=()
+  fi
+}
+
+check_auth() {
+  if [[ -z "$KANBAN_TOKEN" ]]; then
+    echo -e "${RED}❌ Error: KANBAN_TOKEN environment variable is not set${NC}"
+    echo -e "   Run 'kanban-cli.sh login <email> <password>' to get a token"
+    echo -e "   Then: export KANBAN_TOKEN=<your_token>"
+    exit 1
+  fi
+  set_auth_header
+}
 
 usage() {
   echo "Kanban CLI — Multi-agent task coordination"
@@ -22,6 +42,8 @@ usage() {
   echo "Usage: $0 <command> [args]"
   echo ""
   echo "Commands:"
+  echo "  login <email> <password> Get auth token (save to KANBAN_TOKEN)"
+  echo "  whoami                  Show current user info"
   echo "  list [status]           List tasks (default: ready)"
   echo "  show <task_id>          Show task details"
   echo "  claim <task_id> <agent> Claim a task"
@@ -35,10 +57,10 @@ usage() {
   echo ""
   echo "Environment:"
   echo "  KANBAN_API_URL          API base URL (default: http://localhost:3000)"
+  echo "  KANBAN_TOKEN            Authentication token (required for most commands)"
   echo "  KANBAN_SNAPSHOT_DIR     Snapshot storage (default: /tmp/kanban-snapshots)"
 }
 
-# Calculate cost based on model
 calc_cost() {
   local input=$1
   local output=$2
@@ -66,19 +88,57 @@ calc_cost() {
   esac
 }
 
+cmd_login() {
+  local email="$1"
+  local password="$2"
+  [[ -z "$email" || -z "$password" ]] && { echo "Error: email and password required"; exit 1; }
+  
+  echo -e "${YELLOW}🔐 Logging in as $email...${NC}"
+  
+  local payload
+  payload=$(jq -n --arg email "$email" --arg password "$password" '{email:$email,password:$password}')
+  
+  result=$(curl -s -X POST "$KANBAN_API_URL/auth/login" \
+    -H "Content-Type: application/json" \
+    -d "$payload")
+  
+  if echo "$result" | jq -e '.tokens.accessToken' > /dev/null 2>&1; then
+    token=$(echo "$result" | jq -r '.tokens.accessToken')
+    echo -e "${GREEN}✅ Login successful!${NC}"
+    echo ""
+    echo "Set this token in your environment:"
+    echo -e "${BLUE}export KANBAN_TOKEN=\"$token\"${NC}"
+    echo ""
+    echo "Or add to your shell config (~/.bashrc or ~/.zshrc)"
+  else
+    echo -e "${RED}❌ Login failed${NC}"
+    echo "$result" | jq -r '.error // .'
+    exit 1
+  fi
+}
+
+cmd_whoami() {
+  check_auth
+  echo -e "${BLUE}👤 Current User${NC}"
+  curl -s "$KANBAN_API_URL/auth/me" "${AUTH_HEADER[@]}" | jq '.user'
+}
+
 cmd_list() {
+  check_auth
   local status="${1:-ready}"
   echo -e "${BLUE}📋 Tasks (status: $status)${NC}"
-  curl -s "$KANBAN_API_URL/tasks?status=$status" | jq -r '.tasks[] | "  [\(.priority)★] \(.id | .[0:8])... \(.title)"'
+  curl -s "$KANBAN_API_URL/tasks?status=$status" "${AUTH_HEADER[@]}" | jq -r '.tasks[] | "  [\(.priority)★] \(.id | .[0:8])... \(.title)"'
 }
 
 cmd_show() {
+  check_auth
   local task_id="$1"
   [[ -z "$task_id" ]] && { echo "Error: task_id required"; exit 1; }
-  curl -s "$KANBAN_API_URL/tasks/$task_id" | jq '.task'
+  curl -s "$KANBAN_API_URL/tasks/$task_id" "${AUTH_HEADER[@]}" | jq '.task'
 }
 
 cmd_claim() {
+  check_auth
   local task_id="$1"
   local agent_id="$2"
   [[ -z "$task_id" || -z "$agent_id" ]] && { echo "Error: task_id and agent_id required"; exit 1; }
@@ -86,6 +146,7 @@ cmd_claim() {
   echo -e "${YELLOW}🔒 Claiming task $task_id as $agent_id...${NC}"
   
   result=$(curl -s -X POST "$KANBAN_API_URL/tasks/$task_id/claim" \
+    "${AUTH_HEADER[@]}" \
     -H "Content-Type: application/json" \
     -d "{\"agent_id\": \"$agent_id\"}")
   
@@ -93,7 +154,6 @@ cmd_claim() {
     echo -e "${GREEN}✅ Claimed!${NC}"
     echo "$result" | jq '.task | {id, title, description, priority}'
     
-    # Save snapshot marker (agents should record their own token counts)
     echo "{\"task_id\": \"$task_id\", \"agent_id\": \"$agent_id\", \"claimed_at\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" > "$SNAPSHOT_DIR/$task_id.json"
     echo -e "${BLUE}📸 Snapshot saved. Record your current token usage!${NC}"
   else
@@ -104,6 +164,7 @@ cmd_claim() {
 }
 
 cmd_complete() {
+  check_auth
   local task_id="$1"
   local agent_id="$2"
   local input_tokens="$3"
@@ -112,12 +173,10 @@ cmd_complete() {
   
   [[ -z "$task_id" || -z "$agent_id" ]] && { echo "Error: task_id and agent_id required"; exit 1; }
   
-  # Default values if not provided
   input_tokens="${input_tokens:-0}"
   output_tokens="${output_tokens:-0}"
   model="${model:-claude-sonnet-4}"
   
-  # Calculate cost
   local cost=$(calc_cost "$input_tokens" "$output_tokens" "$model")
   
   echo -e "${YELLOW}✅ Completing task $task_id...${NC}"
@@ -126,6 +185,7 @@ cmd_complete() {
   echo -e "   Cost: \$${cost}"
   
   result=$(curl -s -X POST "$KANBAN_API_URL/tasks/$task_id/complete" \
+    "${AUTH_HEADER[@]}" \
     -H "Content-Type: application/json" \
     -H "x-agent-id: $agent_id" \
     -d "{
@@ -140,8 +200,6 @@ cmd_complete() {
   
   if echo "$result" | jq -e '.task' > /dev/null 2>&1; then
     echo -e "${GREEN}🎉 Task completed!${NC}"
-    
-    # Clean up snapshot
     rm -f "$SNAPSHOT_DIR/$task_id.json"
   else
     echo -e "${RED}❌ Failed to complete${NC}"
@@ -151,6 +209,7 @@ cmd_complete() {
 }
 
 cmd_block() {
+  check_auth
   local task_id="$1"
   local agent_id="$2"
   local reason="$3"
@@ -160,12 +219,14 @@ cmd_block() {
   echo -e "${YELLOW}🚫 Blocking task $task_id...${NC}"
   
   curl -s -X POST "$KANBAN_API_URL/tasks/$task_id/block" \
+    "${AUTH_HEADER[@]}" \
     -H "Content-Type: application/json" \
     -H "x-agent-id: $agent_id" \
     -d "{\"reason\": \"$reason\"}" | jq '.'
 }
 
 cmd_release() {
+  check_auth
   local task_id="$1"
   local agent_id="$2"
   
@@ -174,6 +235,7 @@ cmd_release() {
   echo -e "${YELLOW}🔓 Releasing task $task_id...${NC}"
   
   curl -s -X POST "$KANBAN_API_URL/tasks/$task_id/release" \
+    "${AUTH_HEADER[@]}" \
     -H "Content-Type: application/json" \
     -H "x-agent-id: $agent_id" | jq '.'
     
@@ -181,15 +243,17 @@ cmd_release() {
 }
 
 cmd_stats() {
+  check_auth
   echo -e "${BLUE}📊 Usage Statistics${NC}"
-  curl -s "$KANBAN_API_URL/stats/usage" | jq '.totals'
+  curl -s "$KANBAN_API_URL/stats/usage" "${AUTH_HEADER[@]}" | jq '.totals'
   echo ""
   echo -e "${BLUE}By Agent:${NC}"
-  curl -s "$KANBAN_API_URL/stats/usage" | jq -r '.by_agent[] | "  \(.agent): $\(.cost_usd | tostring | .[0:6]) (\(.task_count) tasks)"'
+  curl -s "$KANBAN_API_URL/stats/usage" "${AUTH_HEADER[@]}" | jq -r '.by_agent[] | "  \(.agent): $\(.cost_usd | tostring | .[0:6]) (\(.task_count) tasks)"'
 }
 
-# Main command router
 case "${1:-}" in
+  login)   cmd_login "$2" "$3" ;;
+  whoami)  cmd_whoami ;;
   list)    cmd_list "$2" ;;
   show)    cmd_show "$2" ;;
   claim)   cmd_claim "$2" "$3" ;;

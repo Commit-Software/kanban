@@ -37,6 +37,46 @@ Configure models and agent-specific pricing.
 - **WebSocket Support** — Live updates across multiple clients
 - **CLI Tool** — Command-line interface for agent integration
 - **PWA Ready** — Installable as a Progressive Web App
+- **User Authentication** — JWT-based auth with role-based access control
+
+## Authentication & Onboarding
+
+The app requires authentication. On first run, you'll be guided through setup.
+
+### First-Time Setup
+
+1. Start the API and UI servers (see Quick Start below)
+2. Open http://localhost:5173 in your browser
+3. You'll be redirected to `/setup` to create the admin account
+4. Enter your email and password (min 8 characters)
+5. Click "Create Admin Account" — you're now logged in
+
+### Subsequent Logins
+
+After setup is complete, visit the app and you'll see the login page. Enter your credentials to access the kanban board.
+
+### User Roles
+
+| Role | Permissions |
+|------|-------------|
+| **admin** | Full access: manage all tasks, create/edit/delete users |
+| **user** | Limited access: can only see and manage their own tasks |
+
+### Managing Users (Admin Only)
+
+Admins can manage users via the **Users** nav link:
+- Create new users with email/password/role
+- Edit existing users (change role, reset password)
+- Delete users (cannot delete yourself)
+
+### Resetting the App
+
+To start fresh and trigger the setup flow again:
+
+```bash
+rm kanban-api/data/kanban.db
+# Restart the API server
+```
 
 ## Architecture
 
@@ -74,7 +114,11 @@ Create `.env` in `kanban-api/`:
 ```env
 PORT=3000
 DATABASE_PATH=./data/kanban.db
+JWT_SECRET=your-secret-key-min-32-chars
+JWT_REFRESH_SECRET=different-secret-key-min-32-chars
 ```
+
+> **Note:** If JWT secrets are not set, random secrets are generated on startup (tokens won't persist across restarts).
 
 ## API Endpoints
 
@@ -92,20 +136,44 @@ DATABASE_PATH=./data/kanban.db
 
 ## CLI Usage
 
-The CLI tool allows agents to interact with the kanban board:
+The CLI tool allows agents to interact with the kanban board. Authentication is required.
+
+### Setup
+
+```bash
+# Login to get an auth token
+./kanban-skill/kanban-cli.sh login admin@example.com yourpassword
+
+# Export the token (add to ~/.bashrc or ~/.zshrc for persistence)
+export KANBAN_TOKEN="<token-from-login>"
+
+# Verify authentication
+./kanban-skill/kanban-cli.sh whoami
+```
+
+### Commands
 
 ```bash
 # List tasks
 ./kanban-skill/kanban-cli.sh list
 
-# Create a task
-./kanban-skill/kanban-cli.sh create "Fix bug" --agent nick --estimate 0.50
+# Show task details
+./kanban-skill/kanban-cli.sh show <task-id>
 
-# Move a task
-./kanban-skill/kanban-cli.sh move <task-id> in_progress
+# Claim a task
+./kanban-skill/kanban-cli.sh claim <task-id> <agent-name>
 
-# Complete a task
-./kanban-skill/kanban-cli.sh complete <task-id>
+# Complete a task with usage tracking
+./kanban-skill/kanban-cli.sh complete <task-id> <agent> <input_tokens> <output_tokens> <model>
+
+# Block a task
+./kanban-skill/kanban-cli.sh block <task-id> <agent> "reason"
+
+# Release a claimed task
+./kanban-skill/kanban-cli.sh release <task-id> <agent>
+
+# View usage statistics
+./kanban-skill/kanban-cli.sh stats
 ```
 
 ## Tech Stack

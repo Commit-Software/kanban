@@ -29,42 +29,60 @@ export const knex = Knex({
   },
 });
 
+// Helper to create table if not exists (handles race conditions)
+const createTableIfNotExists = async (
+  tableName: string,
+  builder: (table: Knex.Knex.CreateTableBuilder) => void
+): Promise<boolean> => {
+  const exists = await knex.schema.hasTable(tableName);
+  if (exists) return false;
+  
+  try {
+    await knex.schema.createTable(tableName, builder);
+    return true;
+  } catch (err: unknown) {
+    // Handle race condition: table was created between hasTable check and createTable
+    if (err instanceof Error && err.message.includes('already exists')) {
+      return false;
+    }
+    throw err;
+  }
+};
+
 // Initialize database schema
 export const initializeDb = async (): Promise<void> => {
-  const hasTasksTable = await knex.schema.hasTable('tasks');
-  
-  if (!hasTasksTable) {
-    await knex.schema.createTable('tasks', (table) => {
-      table.uuid('id').primary();
-      table.string('title', 255).notNullable();
-      table.text('description');
-      table.string('status', 20).notNullable().defaultTo('backlog');
-      table.integer('priority').notNullable().defaultTo(3);
-      table.json('skills_required').defaultTo('[]');
-      table.string('claimed_by');
-      table.datetime('claimed_at');
-      table.integer('timeout_minutes').notNullable().defaultTo(30);
-      table.uuid('parent_task_id').references('id').inTable('tasks');
-      table.json('output');
-      table.text('blocked_reason');
-      table.date('due_date');
-      // Usage tracking fields
-      table.integer('usage_input_tokens');
-      table.integer('usage_output_tokens');
-      table.string('usage_model');
-      table.float('usage_cost_usd');
-      table.string('created_by').notNullable();
-      table.datetime('created_at').notNullable();
-      table.datetime('updated_at').notNullable();
-      
-      // Indexes for common queries
-      table.index('status');
-      table.index('claimed_by');
-      table.index('parent_task_id');
-      table.index('due_date');
-      table.index(['status', 'claimed_by']);
-    });
+  const tasksCreated = await createTableIfNotExists('tasks', (table) => {
+    table.uuid('id').primary();
+    table.string('title', 255).notNullable();
+    table.text('description');
+    table.string('status', 20).notNullable().defaultTo('backlog');
+    table.integer('priority').notNullable().defaultTo(3);
+    table.json('skills_required').defaultTo('[]');
+    table.string('claimed_by');
+    table.datetime('claimed_at');
+    table.integer('timeout_minutes').notNullable().defaultTo(30);
+    table.uuid('parent_task_id').references('id').inTable('tasks');
+    table.json('output');
+    table.text('blocked_reason');
+    table.date('due_date');
+    // Usage tracking fields
+    table.integer('usage_input_tokens');
+    table.integer('usage_output_tokens');
+    table.string('usage_model');
+    table.float('usage_cost_usd');
+    table.string('created_by').notNullable();
+    table.datetime('created_at').notNullable();
+    table.datetime('updated_at').notNullable();
     
+    // Indexes for common queries
+    table.index('status');
+    table.index('claimed_by');
+    table.index('parent_task_id');
+    table.index('due_date');
+    table.index(['status', 'claimed_by']);
+  });
+  
+  if (tasksCreated) {
     console.log('✅ Tasks table created');
   } else {
     // Migrations for existing tables
@@ -90,41 +108,70 @@ export const initializeDb = async (): Promise<void> => {
   }
 
   // Activities table for the activity feed
-  const hasActivitiesTable = await knex.schema.hasTable('activities');
-  
-  if (!hasActivitiesTable) {
-    await knex.schema.createTable('activities', (table) => {
-      table.uuid('id').primary();
-      table.string('type', 50).notNullable();
-      table.string('agent_id').notNullable();
-      table.uuid('task_id');
-      table.string('task_title', 255);
-      table.json('details');
-      table.datetime('created_at').notNullable();
-      
-      // Indexes for common queries
-      table.index('agent_id');
-      table.index('task_id');
-      table.index('type');
-      table.index('created_at');
-    });
+  const activitiesCreated = await createTableIfNotExists('activities', (table) => {
+    table.uuid('id').primary();
+    table.string('type', 50).notNullable();
+    table.string('agent_id').notNullable();
+    table.uuid('task_id');
+    table.string('task_title', 255);
+    table.json('details');
+    table.datetime('created_at').notNullable();
     
+    table.index('agent_id');
+    table.index('task_id');
+    table.index('type');
+    table.index('created_at');
+  });
+  
+  if (activitiesCreated) {
     console.log('✅ Activities table created');
   }
 
   // Agent settings table for model configuration
-  const hasAgentSettingsTable = await knex.schema.hasTable('agent_settings');
+  const agentSettingsCreated = await createTableIfNotExists('agent_settings', (table) => {
+    table.string('agent_id').primary();
+    table.string('model').defaultTo('claude-sonnet-4');
+    table.float('budget_limit_usd');
+    table.datetime('created_at').notNullable();
+    table.datetime('updated_at').notNullable();
+  });
   
-  if (!hasAgentSettingsTable) {
-    await knex.schema.createTable('agent_settings', (table) => {
-      table.string('agent_id').primary();
-      table.string('model').defaultTo('claude-sonnet-4');
-      table.float('budget_limit_usd');
-      table.datetime('created_at').notNullable();
-      table.datetime('updated_at').notNullable();
-    });
-    
+  if (agentSettingsCreated) {
     console.log('✅ Agent settings table created');
+  }
+
+  // Users table for authentication
+  const usersCreated = await createTableIfNotExists('users', (table) => {
+    table.uuid('id').primary();
+    table.string('email', 255).notNullable().unique();
+    table.string('password_hash').notNullable();
+    table.string('role', 20).notNullable().defaultTo('user');
+    table.datetime('created_at').notNullable();
+    table.datetime('updated_at').notNullable();
+
+    table.index('email');
+    table.index('role');
+  });
+
+  if (usersCreated) {
+    console.log('✅ Users table created');
+  }
+
+  // Refresh tokens table for JWT refresh token management
+  const refreshTokensCreated = await createTableIfNotExists('refresh_tokens', (table) => {
+    table.uuid('id').primary();
+    table.uuid('user_id').notNullable().references('id').inTable('users').onDelete('CASCADE');
+    table.string('token_hash').notNullable();
+    table.datetime('expires_at').notNullable();
+    table.datetime('created_at').notNullable();
+
+    table.index('user_id');
+    table.index('token_hash');
+    table.index('expires_at');
+  });
+
+  if (refreshTokensCreated) {
+    console.log('✅ Refresh tokens table created');
   }
 };
 

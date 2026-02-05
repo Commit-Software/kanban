@@ -1,8 +1,11 @@
 import { Router, Request, Response } from 'express';
 import { getUsageStats, UsageStatsQuerySchema } from '../services/stats.js';
 import { ZodError } from 'zod';
+import { requireAuth } from '../middleware/auth.js';
 
 export const statsRoutes = Router();
+
+statsRoutes.use(requireAuth);
 
 // Helper to handle Zod validation errors
 const handleValidation = <T>(schema: { parse: (data: unknown) => T }, data: unknown): { data?: T; error?: string } => {
