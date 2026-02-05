@@ -1,6 +1,11 @@
 import express from 'express';
 import { createServer } from 'http';
 import { Server as SocketIOServer } from 'socket.io';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 import { initializeDb } from './db/index.js';
 import { taskRoutes } from './routes/tasks.js';
 import { activityRoutes } from './routes/activities.js';
@@ -80,6 +85,23 @@ app.use('/activities', activityRoutes);
 app.use('/stats', statsRoutes);
 app.use('/settings', settingsRoutes);
 app.use('/agents', agentRoutes);
+
+// Serve static files from /public (UI build) in production
+const publicPath = path.join(__dirname, '../public');
+app.use(express.static(publicPath));
+
+// SPA fallback - serve index.html for non-API routes
+app.get('*', (req, res, next) => {
+  // Skip API routes
+  if (req.path.startsWith('/auth') || req.path.startsWith('/users') || 
+      req.path.startsWith('/tasks') || req.path.startsWith('/activities') ||
+      req.path.startsWith('/stats') || req.path.startsWith('/settings') ||
+      req.path.startsWith('/agents') || req.path.startsWith('/health') ||
+      req.path.startsWith('/socket.io')) {
+    return next();
+  }
+  res.sendFile(path.join(publicPath, 'index.html'));
+});
 
 // Error handler
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
