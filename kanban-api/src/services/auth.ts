@@ -197,7 +197,7 @@ export const refreshTokens = async (
 
   const now = new Date().toISOString();
   const expiresAt = new Date(Date.now() + REFRESH_TOKEN_EXPIRY_SECONDS * 1000).toISOString();
-  const tokenHash = await hashPassword(newTokens.refreshToken);
+  const tokenHash = await hashToken(newTokens.refreshToken);
 
   await knex('refresh_tokens').insert({
     id: randomUUID(),
