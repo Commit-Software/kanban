@@ -16,7 +16,12 @@ export default function Layout() {
     ...(user?.role === 'admin' ? [{ to: '/users', label: 'Users', icon: '👥' }] : []),
   ];
 
-  const currentPage = navItems.find(item => item.to === location.pathname) || navItems[0];
+  // Find current page - prefer exact match, then longest prefix match for non-root items
+  const currentPage = navItems.find(item => item.to === location.pathname) 
+    || navItems
+        .filter(item => item.to !== '/' && location.pathname.startsWith(item.to))
+        .sort((a, b) => b.to.length - a.to.length)[0]
+    || navItems[0];
 
   async function handleLogout() {
     await logout();
@@ -96,6 +101,7 @@ export default function Layout() {
               <li key={item.to}>
                 <NavLink
                   to={item.to}
+                  end={item.to === '/'}
                   onClick={() => setDrawerOpen(false)}
                   className={({ isActive }) =>
                     `flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium transition-all ${
