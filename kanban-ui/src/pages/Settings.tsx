@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { api } from '../api';
+import { api, getAccessToken } from '../api';
 import { HelpTooltip, HELP_CONTENT } from '../components/HelpTooltip';
 
 interface Model {
@@ -15,6 +15,19 @@ interface AgentSettings {
   budget_limit_usd: number | null;
   created_at?: string;
   updated_at?: string;
+}
+
+// Helper for authenticated fetch
+async function authFetch(url: string, options: RequestInit = {}) {
+  const token = getAccessToken();
+  const headers = new Headers(options.headers);
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+  if (!headers.has('Content-Type') && options.body) {
+    headers.set('Content-Type', 'application/json');
+  }
+  return fetch(url, { ...options, headers });
 }
 
 export default function Settings() {
@@ -33,8 +46,8 @@ export default function Settings() {
       setLoading(true);
       
       const [modelsRes, agentsRes] = await Promise.all([
-        fetch(`${api.baseUrl}/settings/models`),
-        fetch(`${api.baseUrl}/settings/agents`),
+        authFetch(`${api.baseUrl}/settings/models`),
+        authFetch(`${api.baseUrl}/settings/agents`),
       ]);
       
       if (!modelsRes.ok || !agentsRes.ok) {
@@ -63,7 +76,7 @@ export default function Settings() {
     try {
       setSaving(agentId);
       
-      const response = await fetch(`${api.baseUrl}/settings/agents/${encodeURIComponent(agentId)}`, {
+      const response = await authFetch(`${api.baseUrl}/settings/agents/${encodeURIComponent(agentId)}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ model }),
@@ -89,7 +102,7 @@ export default function Settings() {
     try {
       setSaving('new');
       
-      const response = await fetch(`${api.baseUrl}/settings/agents/${encodeURIComponent(newAgentId.trim())}`, {
+      const response = await authFetch(`${api.baseUrl}/settings/agents/${encodeURIComponent(newAgentId.trim())}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ model: newAgentModel }),
@@ -114,7 +127,7 @@ export default function Settings() {
     try {
       setSaving(agentId);
       
-      const response = await fetch(`${api.baseUrl}/settings/agents/${encodeURIComponent(agentId)}`, {
+      const response = await authFetch(`${api.baseUrl}/settings/agents/${encodeURIComponent(agentId)}`, {
         method: 'DELETE',
       });
       

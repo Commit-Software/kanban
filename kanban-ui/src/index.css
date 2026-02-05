@@ -1,32 +1,27 @@
 @import "tailwindcss";
 
 /* iOS PWA safe area support */
-html {
-  /* Ensure safe areas are respected */
-  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-}
-
-body {
-  /* Full height accounting for safe areas */
+html, body, #root {
+  /* Use min-height instead of padding on html */
   min-height: 100dvh;
   min-height: -webkit-fill-available;
 }
 
 /* Safe area utility classes */
 .safe-top {
-  padding-top: env(safe-area-inset-top);
+  padding-top: max(env(safe-area-inset-top, 0px), 0px);
 }
 
 .safe-bottom {
-  padding-bottom: env(safe-area-inset-bottom);
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 0px);
 }
 
 .safe-left {
-  padding-left: env(safe-area-inset-left);
+  padding-left: env(safe-area-inset-left, 0px);
 }
 
 .safe-right {
-  padding-right: env(safe-area-inset-right);
+  padding-right: env(safe-area-inset-right, 0px);
 }
 
 /* Prevent text selection during drag on iOS */

@@ -10,6 +10,7 @@ const getSocketUrl = () => {
   
   const { protocol, hostname } = window.location;
   if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
+    // When accessed via Tailscale/external, connect to port 3000
     const wsProtocol = protocol === 'https:' ? 'wss:' : 'ws:';
     return `${wsProtocol}//${hostname}:3000`;
   }

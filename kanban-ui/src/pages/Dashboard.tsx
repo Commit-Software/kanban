@@ -1,6 +1,17 @@
 import { useState, useEffect } from 'react';
-import { api } from '../api';
+import { api, getAccessToken } from '../api';
 import { HelpTooltip, HELP_CONTENT } from '../components/HelpTooltip';
+
+
+// Helper for authenticated fetch
+async function authFetch(url: string, options: RequestInit = {}) {
+  const token = getAccessToken();
+  const headers = new Headers(options.headers);
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+  return fetch(url, { ...options, headers });
+}
 
 // Agent Usage Card Component
 function AgentUsageCard({ agents }: { agents: string[] }) {
@@ -25,7 +36,7 @@ function AgentUsageCard({ agents }: { agents: string[] }) {
     setError(null);
     
     try {
-      const response = await fetch(`${api.baseUrl}/agents/${encodeURIComponent(id)}/usage`);
+      const response = await authFetch(`${api.baseUrl}/agents/${encodeURIComponent(id)}/usage`);
       if (!response.ok) throw new Error('Agent not found');
       const data = await response.json();
       setUsage(data);
@@ -200,7 +211,7 @@ export default function Dashboard() {
       }
       
       const params = from ? `?from=${encodeURIComponent(from)}` : '';
-      const response = await fetch(`${api.baseUrl}/stats/usage${params}`);
+      const response = await authFetch(`${api.baseUrl}/stats/usage${params}`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch stats');
