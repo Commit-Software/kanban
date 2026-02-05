@@ -5,9 +5,9 @@ import { knex } from '../db/index.js';
 import type { User, UserWithPasswordHash, AuthTokens, JwtPayload } from '../models/user.js';
 
 const BCRYPT_COST = 12;
-const ACCESS_TOKEN_EXPIRY = '15m';
+const ACCESS_TOKEN_EXPIRY = '1h';
 const REFRESH_TOKEN_EXPIRY = '7d';
-const ACCESS_TOKEN_EXPIRY_SECONDS = 15 * 60;
+const ACCESS_TOKEN_EXPIRY_SECONDS = 60 * 60;
 const REFRESH_TOKEN_EXPIRY_SECONDS = 7 * 24 * 60 * 60;
 
 const getJwtSecret = (): string => {
