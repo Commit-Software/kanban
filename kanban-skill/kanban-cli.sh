@@ -95,9 +95,12 @@ cmd_login() {
   
   echo -e "${YELLOW}🔐 Logging in as $email...${NC}"
   
+  local payload
+  payload=$(jq -n --arg email "$email" --arg password "$password" '{email:$email,password:$password}')
+  
   result=$(curl -s -X POST "$KANBAN_API_URL/auth/login" \
     -H "Content-Type: application/json" \
-    -d "{\"email\": \"$email\", \"password\": \"$password\"}")
+    -d "$payload")
   
   if echo "$result" | jq -e '.tokens.accessToken' > /dev/null 2>&1; then
     token=$(echo "$result" | jq -r '.tokens.accessToken')
