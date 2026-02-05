@@ -1,0 +1,38 @@
+services:
+  kanban:
+    build: .
+    container_name: kanban-app
+    restart: unless-stopped
+    volumes:
+      - kanban-data:/app/data
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DB_PATH=/app/data/kanban.db
+    networks:
+      - kanban-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: kanban-tunnel
+    restart: unless-stopped
+    command: tunnel run
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+    networks:
+      - kanban-network
+    depends_on:
+      kanban:
+        condition: service_healthy
+
+volumes:
+  kanban-data:
+
+networks:
+  kanban-network:
+    driver: bridge
