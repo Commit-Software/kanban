@@ -8,8 +8,11 @@ import {
   UpdateAgentSettingsSchema 
 } from '../services/settings.js';
 import { ZodError } from 'zod';
+import { requireAuth } from '../middleware/auth.js';
 
 export const settingsRoutes = Router();
+
+settingsRoutes.use(requireAuth);
 
 // Helper to handle Zod validation errors
 const handleValidation = <T>(schema: { parse: (data: unknown) => T }, data: unknown): { data?: T; error?: string } => {

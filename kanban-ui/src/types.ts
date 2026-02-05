@@ -25,6 +25,34 @@ export interface Task {
   usage_cost_usd?: number | null;
 }
 
+// User and Auth types
+export type UserRole = 'admin' | 'user';
+
+export interface User {
+  id: string;
+  email: string;
+  role: UserRole;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AuthTokens {
+  accessToken: string;
+  refreshToken: string;
+}
+
+export interface AuthState {
+  user: User | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  setupRequired: boolean;
+}
+
+export interface LoginCredentials {
+  email: string;
+  password: string;
+}
+
 // Activity types for the feed
 export type ActivityType = 
   | 'task_created'

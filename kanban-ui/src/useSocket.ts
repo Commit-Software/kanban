@@ -1,17 +1,14 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 import type { Task } from './types';
+import { getAccessToken } from './api';
 
-// Detect WebSocket URL based on current location
-// In production/Tailscale, connect to same host on port 3000
-// In dev with proxy, connect to localhost:3000
 const getSocketUrl = () => {
   if (import.meta.env.VITE_API_URL) {
     return import.meta.env.VITE_API_URL;
   }
   
   const { protocol, hostname } = window.location;
-  // If accessing via Tailscale or non-localhost, connect to API on port 3000
   if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
     const wsProtocol = protocol === 'https:' ? 'wss:' : 'ws:';
     return `${wsProtocol}//${hostname}:3000`;
@@ -36,15 +33,20 @@ export function useSocket(handlers: Partial<TaskEvents>) {
   const handlersRef = useRef(handlers);
   const [connected, setConnected] = useState(false);
   
-  // Keep handlers ref up to date
   useEffect(() => {
     handlersRef.current = handlers;
   }, [handlers]);
 
-  useEffect(() => {
-    // Connect to socket
+  const connect = useCallback(() => {
+    if (socketRef.current?.connected) {
+      return;
+    }
+
+    const token = getAccessToken();
+    
     const socket = io(API_URL, {
       transports: ['websocket', 'polling'],
+      auth: { token },
     });
     
     socketRef.current = socket;
@@ -59,7 +61,11 @@ export function useSocket(handlers: Partial<TaskEvents>) {
       setConnected(false);
     });
 
-    // Register event handlers
+    socket.on('connect_error', (error) => {
+      console.error('🔌 WebSocket connection error:', error.message);
+      setConnected(false);
+    });
+
     const events: (keyof TaskEvents)[] = [
       'task:created',
       'task:updated', 
@@ -77,11 +83,25 @@ export function useSocket(handlers: Partial<TaskEvents>) {
         }
       });
     });
-
-    return () => {
-      socket.disconnect();
-    };
   }, []);
 
-  return { connected };
+  const reconnect = useCallback(() => {
+    if (socketRef.current) {
+      socketRef.current.disconnect();
+      socketRef.current = null;
+    }
+    connect();
+  }, [connect]);
+
+  useEffect(() => {
+    connect();
+
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+      }
+    };
+  }, [connect]);
+
+  return { connected, reconnect };
 }

@@ -126,6 +126,46 @@ export const initializeDb = async (): Promise<void> => {
     
     console.log('✅ Agent settings table created');
   }
+
+  // Users table for authentication
+  const hasUsersTable = await knex.schema.hasTable('users');
+
+  if (!hasUsersTable) {
+    await knex.schema.createTable('users', (table) => {
+      table.uuid('id').primary();
+      table.string('email', 255).notNullable().unique();
+      table.string('password_hash').notNullable();
+      table.string('role', 20).notNullable().defaultTo('user');
+      table.datetime('created_at').notNullable();
+      table.datetime('updated_at').notNullable();
+
+      // Indexes
+      table.index('email');
+      table.index('role');
+    });
+
+    console.log('✅ Users table created');
+  }
+
+  // Refresh tokens table for JWT refresh token management
+  const hasRefreshTokensTable = await knex.schema.hasTable('refresh_tokens');
+
+  if (!hasRefreshTokensTable) {
+    await knex.schema.createTable('refresh_tokens', (table) => {
+      table.uuid('id').primary();
+      table.uuid('user_id').notNullable().references('id').inTable('users').onDelete('CASCADE');
+      table.string('token_hash').notNullable();
+      table.datetime('expires_at').notNullable();
+      table.datetime('created_at').notNullable();
+
+      // Indexes
+      table.index('user_id');
+      table.index('token_hash');
+      table.index('expires_at');
+    });
+
+    console.log('✅ Refresh tokens table created');
+  }
 };
 
 // Close database connection

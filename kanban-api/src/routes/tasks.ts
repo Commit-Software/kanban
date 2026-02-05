@@ -21,8 +21,11 @@ import {
 } from '../services/tasks.js';
 import { emitTaskEvent } from '../index.js';
 import { ZodError } from 'zod';
+import { requireAuth } from '../middleware/auth.js';
 
 export const taskRoutes = Router();
+
+taskRoutes.use(requireAuth);
 
 // Helper to handle Zod validation errors
 const handleValidation = <T>(schema: { parse: (data: unknown) => T }, data: unknown): { data?: T; error?: string } => {
@@ -43,7 +46,12 @@ taskRoutes.get('/', async (req: Request, res: Response) => {
     return res.status(400).json({ error });
   }
   
-  const tasks = await listTasks(query!);
+  let tasks = await listTasks(query!);
+  
+  if (req.user!.role !== 'admin') {
+    tasks = tasks.filter(t => t.created_by === req.user!.id);
+  }
+  
   res.json({ tasks, count: tasks.length });
 });
 
@@ -53,12 +61,18 @@ taskRoutes.get('/:id', async (req: Request, res: Response) => {
   if (!task) {
     return res.status(404).json({ error: 'Task not found' });
   }
+  
+  if (req.user!.role !== 'admin' && task.created_by !== req.user!.id) {
+    return res.status(403).json({ error: 'Access denied' });
+  }
+  
   res.json({ task });
 });
 
 // POST /tasks - Create new task
 taskRoutes.post('/', async (req: Request, res: Response) => {
-  const { data: input, error } = handleValidation(CreateTaskSchema, req.body);
+  const body = { ...req.body, created_by: req.user!.id };
+  const { data: input, error } = handleValidation(CreateTaskSchema, body);
   if (error) {
     return res.status(400).json({ error });
   }
@@ -70,12 +84,21 @@ taskRoutes.post('/', async (req: Request, res: Response) => {
 
 // PATCH /tasks/:id - Update a task
 taskRoutes.patch('/:id', async (req: Request, res: Response) => {
+  const existingTask = await getTaskById(req.params.id);
+  if (!existingTask) {
+    return res.status(404).json({ error: 'Task not found' });
+  }
+  
+  if (req.user!.role !== 'admin' && existingTask.created_by !== req.user!.id) {
+    return res.status(403).json({ error: 'Access denied' });
+  }
+  
   const { data: input, error } = handleValidation(UpdateTaskSchema, req.body);
   if (error) {
     return res.status(400).json({ error });
   }
   
-  const result = await updateTask(req.params.id, input!);
+  const result = await updateTask(req.params.id, input!, req.user!.id);
   if (!result.success) {
     return res.status(404).json({ error: result.error });
   }
@@ -85,8 +108,17 @@ taskRoutes.patch('/:id', async (req: Request, res: Response) => {
 
 // DELETE /tasks/:id - Delete a task
 taskRoutes.delete('/:id', async (req: Request, res: Response) => {
+  const existingTask = await getTaskById(req.params.id);
+  if (!existingTask) {
+    return res.status(404).json({ error: 'Task not found' });
+  }
+  
+  if (req.user!.role !== 'admin' && existingTask.created_by !== req.user!.id) {
+    return res.status(403).json({ error: 'Access denied' });
+  }
+  
   const taskId = req.params.id;
-  const result = await deleteTask(taskId);
+  const result = await deleteTask(taskId, req.user!.id);
   if (!result.success) {
     return res.status(404).json({ error: result.error });
   }
