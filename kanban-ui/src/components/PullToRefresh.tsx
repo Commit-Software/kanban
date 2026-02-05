@@ -61,7 +61,13 @@ export function PullToRefresh({ onRefresh, children, className = '' }: PullToRef
       setPullDistance(50); // Hold position during refresh
       
       try {
+        const start = Date.now();
         await onRefresh();
+        // Ensure spinner shows for at least 500ms
+        const elapsed = Date.now() - start;
+        if (elapsed < 500) {
+          await new Promise(r => setTimeout(r, 500 - elapsed));
+        }
       } finally {
         setRefreshing(false);
         setPullDistance(0);
