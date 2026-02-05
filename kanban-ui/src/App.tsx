@@ -214,8 +214,8 @@ function App() {
   }
 
   return (
-    <PullToRefresh onRefresh={fetchTasks} className="h-full">
-    <div className="h-full bg-gray-950 flex flex-col overflow-hidden">
+    <PullToRefresh onRefresh={fetchTasks} className="h-full bg-gray-950">
+      <div className="h-full flex flex-col overflow-hidden">
       {/* Header - responsive */}
       <div className="flex-shrink-0 p-4 md:p-6 pb-2 md:pb-4">
         <div className="max-w-[1800px] mx-auto">
