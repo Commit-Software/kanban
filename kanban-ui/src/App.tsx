@@ -214,6 +214,7 @@ function App() {
   }
 
   return (
+    <>
     <PullToRefresh onRefresh={fetchTasks} className="h-full bg-gray-950">
       <div className="h-full flex flex-col overflow-hidden">
       {/* Header - responsive */}
@@ -310,12 +311,16 @@ function App() {
       />
 
       {/* Activity Feed panel */}
-      <ActivityFeed
-        isOpen={isActivityOpen}
-        onClose={() => setIsActivityOpen(false)}
-      />
+      
     </div>
     </PullToRefresh>
+    
+    {/* Activity Feed - outside PullToRefresh so it's not affected by translate */}
+    <ActivityFeed
+      isOpen={isActivityOpen}
+      onClose={() => setIsActivityOpen(false)}
+    />
+    </>
   );
 }
 
