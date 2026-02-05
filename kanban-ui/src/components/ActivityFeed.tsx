@@ -81,11 +81,10 @@ export function ActivityFeed({ isOpen, onClose }: ActivityFeedProps) {
         style={{
           paddingTop: 'env(safe-area-inset-top)',
           paddingRight: 'env(safe-area-inset-right)',
-          paddingBottom: 'env(safe-area-inset-bottom)',
         }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-800">
+        <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-800">
           <h2 className="text-white font-semibold flex items-center gap-2">
             📜 Activity Feed
           </h2>
@@ -108,7 +107,10 @@ export function ActivityFeed({ isOpen, onClose }: ActivityFeedProps) {
         </div>
 
         {/* Activity list */}
-        <div className="flex-1 overflow-y-auto">
+        <div 
+          className="flex-1 overflow-y-auto"
+          style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+        >
           {loading ? (
             <div className="p-4 text-gray-500 text-center">Loading...</div>
           ) : activities.length === 0 ? (
