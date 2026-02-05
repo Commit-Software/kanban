@@ -10,7 +10,7 @@ export default defineConfig({
     allowedHosts: ['admins-virtual-machine.tailf05a4e.ts.net'],
     proxy: {
       '/api': {
-        target: 'http://localhost:3000',
+        target: 'http://localhost:3456',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
