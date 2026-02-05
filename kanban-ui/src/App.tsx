@@ -13,6 +13,7 @@ import { EditTaskModal } from './components/EditTaskModal';
 import { FilterBar } from './components/FilterBar';
 import { ActivityFeed } from './components/ActivityFeed';
 import { HelpTooltip, HELP_CONTENT } from './components/HelpTooltip';
+import { PullToRefresh } from './components/PullToRefresh';
 
 function App() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -213,7 +214,9 @@ function App() {
   }
 
   return (
-    <div className="h-full bg-gray-950 flex flex-col overflow-hidden">
+    <>
+    <PullToRefresh onRefresh={fetchTasks} className="h-full bg-gray-950">
+      <div className="h-full flex flex-col overflow-hidden">
       {/* Header - responsive */}
       <div className="flex-shrink-0 p-4 md:p-6 pb-2 md:pb-4">
         <div className="max-w-[1800px] mx-auto">
@@ -308,11 +311,16 @@ function App() {
       />
 
       {/* Activity Feed panel */}
-      <ActivityFeed
-        isOpen={isActivityOpen}
-        onClose={() => setIsActivityOpen(false)}
-      />
+      
     </div>
+    </PullToRefresh>
+    
+    {/* Activity Feed - outside PullToRefresh so it's not affected by translate */}
+    <ActivityFeed
+      isOpen={isActivityOpen}
+      onClose={() => setIsActivityOpen(false)}
+    />
+    </>
   );
 }
 

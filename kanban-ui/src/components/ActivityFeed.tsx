@@ -76,23 +76,32 @@ export function ActivityFeed({ isOpen, onClose }: ActivityFeedProps) {
       />
       
       {/* Panel */}
-      <div className="fixed right-0 top-0 bottom-0 w-full md:w-80 bg-gray-900 border-l border-gray-800 z-50 flex flex-col shadow-2xl">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-800">
+      <div 
+        className="fixed right-0 top-0 bottom-0 w-full md:w-80 bg-gray-900 border-l border-gray-800 z-50 flex flex-col shadow-2xl"
+        style={{
+          paddingRight: 'env(safe-area-inset-right)',
+        }}
+      >
+        {/* Header - with safe area padding inside */}
+        <div 
+          className="flex-shrink-0 flex items-center justify-between px-4 pb-3 border-b border-gray-800"
+          style={{ paddingTop: 'max(env(safe-area-inset-top), 0.75rem)' }}
+        >
           <h2 className="text-white font-semibold flex items-center gap-2">
             📜 Activity Feed
           </h2>
           <div className="flex items-center gap-2">
             <button
               onClick={fetchActivities}
-              className="text-gray-400 hover:text-white p-1 transition-colors"
+              className="text-gray-400 hover:text-white p-2 transition-colors"
               title="Refresh"
             >
               🔄
             </button>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-white p-1 transition-colors"
+              className="text-gray-400 hover:text-white p-2 text-xl transition-colors"
+              aria-label="Close"
             >
               ✕
             </button>
@@ -100,7 +109,10 @@ export function ActivityFeed({ isOpen, onClose }: ActivityFeedProps) {
         </div>
 
         {/* Activity list */}
-        <div className="flex-1 overflow-y-auto">
+        <div 
+          className="flex-1 overflow-y-auto"
+          style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+        >
           {loading ? (
             <div className="p-4 text-gray-500 text-center">Loading...</div>
           ) : activities.length === 0 ? (
