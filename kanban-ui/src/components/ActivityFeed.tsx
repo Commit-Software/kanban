@@ -79,12 +79,14 @@ export function ActivityFeed({ isOpen, onClose }: ActivityFeedProps) {
       <div 
         className="fixed right-0 top-0 bottom-0 w-full md:w-80 bg-gray-900 border-l border-gray-800 z-50 flex flex-col shadow-2xl"
         style={{
-          paddingTop: 'env(safe-area-inset-top)',
           paddingRight: 'env(safe-area-inset-right)',
         }}
       >
-        {/* Header */}
-        <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-800">
+        {/* Header - with safe area padding inside */}
+        <div 
+          className="flex-shrink-0 flex items-center justify-between px-4 pb-3 border-b border-gray-800"
+          style={{ paddingTop: 'max(env(safe-area-inset-top), 0.75rem)' }}
+        >
           <h2 className="text-white font-semibold flex items-center gap-2">
             📜 Activity Feed
           </h2>
