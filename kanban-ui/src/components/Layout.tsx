@@ -6,7 +6,7 @@ export default function Layout() {
   const navigate = useNavigate();
 
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
-    `px-3 py-1.5 rounded-lg transition-colors text-sm font-medium ${
+    `px-2 py-1.5 rounded-lg transition-colors text-xs font-medium whitespace-nowrap ${
       isActive 
         ? 'bg-pink-600 text-white' 
         : 'text-gray-400 hover:text-white hover:bg-gray-800'
@@ -19,12 +19,14 @@ export default function Layout() {
 
   return (
     <div className="h-dvh bg-gray-950 flex flex-col overflow-hidden">
-      <nav className="flex-shrink-0 bg-gray-900 border-b border-gray-800 px-4 py-2">
-        <div className="max-w-[1800px] mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-1">
-            <span className="text-pink-500 text-xl mr-2">📋</span>
+      {/* Safe area spacer for iOS PWA */}
+      <div className="flex-shrink-0 bg-gray-900 safe-top" />
+      
+      <nav className="flex-shrink-0 bg-gray-900 border-b border-gray-800 px-2 py-2 safe-left safe-right">
+        <div className="max-w-[1800px] mx-auto flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
             <NavLink to="/" className={navLinkClass}>
-              Kanban
+              📋 Kanban
             </NavLink>
             <NavLink to="/dashboard" className={navLinkClass}>
               📊 Dashboard
@@ -41,32 +43,26 @@ export default function Layout() {
               </NavLink>
             )}
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 flex-shrink-0">
             {user && (
-              <>
-                <span className="text-gray-400 text-sm">
-                  {user.email}
-                  {user.role === 'admin' && (
-                    <span className="ml-1.5 px-1.5 py-0.5 bg-pink-900/50 text-pink-300 text-xs rounded">
-                      admin
-                    </span>
-                  )}
-                </span>
-                <button
-                  onClick={handleLogout}
-                  className="px-3 py-1.5 text-sm font-medium text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
-                >
-                  Logout
-                </button>
-              </>
+              <button
+                onClick={handleLogout}
+                className="px-2 py-1.5 text-xs font-medium text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
+                title={user.email}
+              >
+                Logout
+              </button>
             )}
           </div>
         </div>
       </nav>
 
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden safe-left safe-right">
         <Outlet />
       </div>
+      
+      {/* Bottom safe area for gesture bar */}
+      <div className="flex-shrink-0 bg-gray-950 safe-bottom" />
     </div>
   );
 }

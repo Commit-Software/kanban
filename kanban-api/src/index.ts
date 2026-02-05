@@ -91,9 +91,10 @@ const publicPath = path.join(__dirname, '../public');
 app.use(express.static(publicPath));
 
 // SPA fallback - serve index.html for non-API routes
-app.get('*', (req, res, next) => {
+app.use((req, res, next) => {
   // Skip API routes
-  if (req.path.startsWith('/auth') || req.path.startsWith('/users') || 
+  if (req.method !== 'GET' ||
+      req.path.startsWith('/auth') || req.path.startsWith('/users') || 
       req.path.startsWith('/tasks') || req.path.startsWith('/activities') ||
       req.path.startsWith('/stats') || req.path.startsWith('/settings') ||
       req.path.startsWith('/agents') || req.path.startsWith('/health') ||
